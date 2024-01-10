@@ -1,54 +1,112 @@
+const DEFAULT_COLOR = '#333333';
+const DEFAULT_MODE = 'color';
+const DEFAULT_SIZE = 16;
+
+let currentColor = DEFAULT_COLOR;
+let currentMode = DEFAULT_MODE;
+let currentSize = DEFAULT_SIZE;
+
+function setCurrentColor(newColor) {
+    currentColor = newColor;
+}
+
+function setCurrentMode (newMode) {
+    activateButton(newMode);
+    currentMode = newMode;
+}
+
+function setCurrentSize (newSize) {
+    currentSize = newSize;
+}
+
+const colorPicker = document.querySelector("#colorPicker");
+const colorBtn = document.querySelector('#colorBtn')
+const rainbowBtn = document.querySelector('#rainbowBtn')
+const eraserBtn = document.querySelector('#eraserBtn')
+const clearBtn = document.querySelector('#clearBtn')
+const sizeValue = document.querySelector('#sizeValue')
+const sizeSlider = document.querySelector('#sizeSlider')
 const container = document.querySelector(".container");
 
-const settings = document.querySelector(".settings");
-const settingsDoc = document.createElement("p");
-settings.appendChild(settingsDoc);
+colorPicker.oninput = (e) => setCurrentColor(e.target.value);
+colorBtn.onclick = (e) => setCurrentMode('color');
+rainbowBtn.onclick = (e) => setCurrentMode('rainbow');
+eraserBtn.onclick = (e) => setCurrentMode('eraser');
+clearBtn.onclick = (e) => reloadGrid();
+sizeSlider.onmousemove = (e) => updateSizeValue(e.target.value);
+sizeSlider.onchange = (e) => changeSize(e.target.value);
 
-const buttonChangeSizeGrid = document.createElement("button");
-settings.appendChild(buttonChangeSizeGrid);
-buttonChangeSizeGrid.textContent = "Change";
+let mouseDown = false;
+document.body.onmousedown = () => (mouseDown = true)
+document.body.onmouseup = () => (mouseDown = false)
 
-function makeGrid(sizeGrid = 16){
-    while (container.firstChild) {
-        container.removeChild(container.firstChild);
-    }
-    for (let i = 0; i < sizeGrid; i++){
+function changeSize(value){
+    setCurrentSize(value);
+    updateSizeValue(value);
+    reloadGrid();
+}
+
+function updateSizeValue(value) {
+    sizeValue.innerHTML = `${value} x ${value}`;
+}
+
+function reloadGrid() {
+    clearGrid();
+    setupGrid(currentSize);
+}
+
+function clearGrid () {
+    container.innerHTML = '';
+}
+
+function setupGrid(size){
+    for (let i = 0; i < size; i++){
         const row = document.createElement("div");
         container.appendChild(row).className = 'gridRow';
-        for (let j = 0; j < sizeGrid; j++){
+        for (let j = 0; j < size; j++){
             let newCell = document.createElement("div");
-            newCell.style.minWidth = `${500/sizeGrid}px`;
+            newCell.style.minWidth = `${500/size}px`;
+            newCell.addEventListener('mouseover', changeColor);
+            newCell.addEventListener('mousedown', changeColor);
             row.appendChild(newCell).className = 'cell';
         }
     }
-    let cells = document.querySelectorAll(".cell")
-    for (const cell of cells){
-        cell.addEventListener("mouseover", function (){
-            let x = Math.floor(Math.random() * 256);
-            let y = Math.floor(Math.random() * 256);
-            let z = Math.floor(Math.random() * 256);
-            cell.style.backgroundColor = `rgb(${x}, ${y}, ${z})`;
-        });
-    }
-
 }
-makeGrid();
 
-buttonChangeSizeGrid.addEventListener("click", function () {
-    let inputSize = parseInt(document.querySelector("#sizeOfGrid").value);
-    if (Number.isInteger(inputSize)){
-        if (inputSize < 0 || inputSize > 100){
-            settingsDoc.textContent = "Please input a size from 1 -> 100";
-        }
-        else {
-            makeGrid(inputSize);
-        }
+function changeColor (e) {
+    if (e.type === 'mouseover' && !mouseDown) return;
+    if (currentMode === 'rainbow') {
+        const randomR = Math.floor(Math.random() * 256);
+        const randomG = Math.floor(Math.random() * 256);
+        const randomB = Math.floor(Math.random() * 256);
+        e.target.style.backgroundColor = `rgb(${randomR}, ${randomG}, ${randomB})`;
+    } else if (currentMode === 'color') {
+        e.target.style.backgroundColor = currentColor;
+    } else if (currentMode === 'eraser') {
+        e.target.style.backgroundColor = "#fefefe";
     }
-    else {
-        settingsDoc.textContent = "Please input a size from 1 -> 100";
+}
+
+function activateButton(newMode) {
+    if (currentMode === 'rainbow') {
+      rainbowBtn.classList.remove('active')
+    } else if (currentMode === 'color') {
+      colorBtn.classList.remove('active')
+    } else if (currentMode === 'eraser') {
+      eraserBtn.classList.remove('active')
     }
-        
-});
+  
+    if (newMode === 'rainbow') {
+      rainbowBtn.classList.add('active')
+    } else if (newMode === 'color') {
+      colorBtn.classList.add('active')
+    } else if (newMode === 'eraser') {
+      eraserBtn.classList.add('active')
+    }
+}
 
-
+window.onload = () => {
+    setupGrid(DEFAULT_SIZE);
+    activateButton(DEFAULT_MODE)
+}
 
